@@ -9,7 +9,6 @@ class CameraoverviewRepository {
             const query = `
                 SELECT 
                    id,
-                    location_name,
                     total_cameras,
                     on_duty_cameras,
                     off_duty_cameras
