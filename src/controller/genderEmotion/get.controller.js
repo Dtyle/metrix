@@ -1,5 +1,6 @@
 const GenderEmotionRepo = require("../../repository/genderEmotion.repo");
 
+
 exports.getGenderAndEmotionCounts = async (req, res) => {
     try {
         // Fetch gender-based counts
@@ -8,16 +9,17 @@ exports.getGenderAndEmotionCounts = async (req, res) => {
         // Fetch emotion-based counts
         const emotionCounts = await GenderEmotionRepo.getEmotionBasedCounts(req.sequelize);
 
-        // const ageCounts = await GenderEmotionRepo.getAgeBasedCounts(req.sequelize);
+        // Fetch age group-based counts
+        const ageGroupCounts = await GenderEmotionRepo.getAgeGroupBasedCounts(req.sequelize);
 
         // Prepare the response
         res.status(200).json({
             status: true,
-            message: "Gender and Emotion counts fetched successfully.",
+            message: "Gender, Emotion, and Age Group counts fetched successfully.",
             data: {
                 genderCounts,
                 emotionCounts,
-                // ageCounts
+                ageGroupCounts
             },
         });
     } catch (error) {
@@ -29,3 +31,4 @@ exports.getGenderAndEmotionCounts = async (req, res) => {
         });
     }
 };
+
