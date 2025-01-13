@@ -6,20 +6,30 @@ class GenderEmotionRepository {
     async getGenderBasedCounts(sequelize) {
         try {
             const query = `
-                SELECT gender, age_group, count, percentage
-                FROM gender_based_count;
+                WITH total_count AS (
+                    SELECT SUM(count) AS total
+                    FROM gender_based_count
+                )
+                SELECT 
+                    gbc.gender, 
+                    gbc.count,
+                    ROUND((gbc.count / tc.total) * 100, 2) AS percentage
+                FROM 
+                    gender_based_count gbc,
+                    total_count tc;
             `;
-        
+    
             const genderCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
             });
-        
+    
             return genderCounts;
         } catch (error) {
             console.error("Error in getGenderBasedCounts:", error);
             throw error;
         }
     }
+    
     
     async getEmotionBasedCounts(sequelize) {
         try {
