@@ -6,23 +6,18 @@ class GenderEmotionRepository {
     async getGenderBasedCounts(sequelize) {
         try {
             const query = `
-                WITH total_count AS (
-                    SELECT SUM(count) AS total
-                    FROM gender_based_count
-                )
                 SELECT 
                     gbc.gender, 
                     gbc.count,
-                    ROUND((gbc.count / tc.total) * 100, 2) AS percentage
+                    ROUND((gbc.count / (SELECT SUM(count) FROM gender_based_count)) * 100, 2) AS percentage
                 FROM 
-                    gender_based_count gbc,
-                    total_count tc;
+                    gender_based_count gbc;
             `;
-    
+        
             const genderCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
             });
-    
+        
             return genderCounts;
         } catch (error) {
             console.error("Error in getGenderBasedCounts:", error);
@@ -30,27 +25,21 @@ class GenderEmotionRepository {
         }
     }
     
-    
     async getEmotionBasedCounts(sequelize) {
         try {
             const query = `
-                WITH total_count AS (
-                    SELECT SUM(count) AS total
-                    FROM emotion_based_count
-                )
                 SELECT 
                     ebc.emotion, 
                     ebc.count,
-                    ROUND((ebc.count / tc.total) * 100, 2) AS percentage
+                    ROUND((ebc.count / (SELECT SUM(count) FROM emotion_based_count)) * 100, 2) AS percentage
                 FROM 
-                    emotion_based_count ebc,
-                    total_count tc;
+                    emotion_based_count ebc;
             `;
-    
+        
             const emotionCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
             });
-    
+        
             return emotionCounts;
         } catch (error) {
             console.error("Error in getEmotionBasedCounts:", error);
