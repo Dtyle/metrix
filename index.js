@@ -40,7 +40,7 @@ require("./src/routes/faceRecognitionRoute.js")(app);
 require("./src/routes/licenseRecognitionRoute.js")(app);
 require("./src/routes/trafficRoutes.js")(app);
 // Set the port and start the server
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
 });
