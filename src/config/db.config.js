@@ -10,13 +10,16 @@ const sequelize = new Sequelize(
    process.env.DATABASEUSERNAME,
    process.env.DATABASEPASSWORD,
    {
-      define: {
-         freezeTableName: false,
-      },
       host: process.env.DATABASEURL,
       port: 3306,
-      dialect: "mysql",
-      logging: false,
+      dialect: 'mysql',
+      pool: {
+         max: 10,        // Maximum number of connections
+         min: 0,         // Minimum number of connections
+         acquire: 30000, // Maximum time (in ms) to acquire a connection
+         idle: 10000     // Maximum time (in ms) a connection can be idle before being released
+      },
+      logging: false   // Disable Sequelize logging (optional)
    }
 );
 
