@@ -7,13 +7,14 @@ class analyticsRepository {
         try {
             const query = `
                 SELECT 
-                    SUM(people_in) AS totalPeopleIn,
-                    SUM(people_out) AS totalPeopleOut,
+                    SUM(CASE WHEN floor_name = 'groundfloor' THEN people_in ELSE 0 END) AS totalPeopleIn,
+                    SUM(CASE WHEN floor_name = 'groundfloor' THEN people_out ELSE 0 END) AS totalPeopleOut,
                     (
                         SELECT floor_name 
                         FROM people_count 
                         WHERE DATE(updated_at) = :date
-                        ORDER BY total_people DESC
+                        GROUP BY floor_name
+                        ORDER BY SUM(people_in + people_out) DESC
                         LIMIT 1
                     ) AS busiestFloor
                 FROM people_count
@@ -35,6 +36,7 @@ class analyticsRepository {
             throw error;
         }
     }
+    
     
     
     
