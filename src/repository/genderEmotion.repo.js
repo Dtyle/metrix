@@ -8,10 +8,12 @@ class GenderEmotionRepository {
             const query = `
                 SELECT 
                     gbc.gender, 
-                    gbc.count,
-                    ROUND((gbc.count / (SELECT SUM(count) FROM gender_based_count)) * 100, 2) AS percentage
+                    SUM(gbc.count) AS count,
+                    ROUND((SUM(gbc.count) / (SELECT SUM(count) FROM gender_based_count)) * 100, 2) AS percentage
                 FROM 
-                    gender_based_count gbc;
+                    gender_based_count gbc
+                GROUP BY
+                    gbc.gender;
             `;
         
             const genderCounts = await sequelize.query(query, {
@@ -51,8 +53,12 @@ class GenderEmotionRepository {
     async getAgeGroupBasedCounts(sequelize) {
         try {
             const query = `
-                SELECT age_group,  percentage
-                FROM gender_based_count;
+                SELECT 
+                    age_group,
+                    count,
+                    ROUND((count / (SELECT SUM(count) FROM gender_based_count)) * 100, 2) AS percentage
+                FROM 
+                    gender_based_count;
             `;
         
             const ageGroupCounts = await sequelize.query(query, {
@@ -65,6 +71,7 @@ class GenderEmotionRepository {
             throw error;
         }
     }
+    
     
     
    
