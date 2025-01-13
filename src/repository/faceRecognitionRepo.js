@@ -49,7 +49,7 @@ async getFaceRecognitionCount(sequelize, date) {
 async getCrowsAlert(sequelize, date) {
     try {
         const query = `
-            SELECT cam_name, timealerts
+            SELECT cam_name, file_path,timealerts
             FROM face_detection
             WHERE DATE(timealerts) = :date AND timealerts IS NOT NULL;
         `;
