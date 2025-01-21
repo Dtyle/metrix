@@ -23,23 +23,23 @@ class trafficRepository {
 
             // Get floor-wise count of people_in for today
             const floorCountQuery = `
-                SELECT floor_name, 
-                       SUM(people_in) AS totalPeople
-                FROM people_count
-                WHERE DATE(updated_at) = CURRENT_DATE
-                GROUP BY floor_name;
+                  SELECT floor_name, 
+           SUM(people_in) AS totalPeople
+    FROM people_count
+    WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+05:30'))
+    GROUP BY floor_name;
             `;
 
             // Get today's timeline graph (people_in per floor for each hour of today)
             const timelineGraphQuery = `
-                SELECT 
-                    floor_name,
-                    EXTRACT(HOUR FROM updated_at) AS hour,
-                    SUM(people_in) AS totalPeople
-                FROM people_count
-                WHERE DATE(updated_at) = CURRENT_DATE
-                GROUP BY floor_name, EXTRACT(HOUR FROM updated_at)
-                ORDER BY floor_name, hour;
+                 SELECT 
+        floor_name,
+        EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
+        SUM(people_in) AS totalPeople
+    FROM people_count
+    WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+05:30'))
+    GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
+    ORDER BY floor_name, hour;
             `;
 
             // Execute both queries
@@ -87,7 +87,7 @@ class trafficRepository {
         }
     }
 }
-    
-    
+
+
 
 module.exports = new trafficRepository();
