@@ -3,8 +3,11 @@ const trafficRepo = require("../../repository/trafficRepo");
 
 exports.getTrafficAnalysis = async (req, res) => {
     try {
-        // Fetch traffic data
-        const trafficData = await trafficRepo.getTrafficAnalysisData(req.sequelize);
+        const { date } = req.query; // Get date from request query parameters
+        const selectedDate = date || new Date().toISOString().slice(0, 10); // Default to today's date if not provided
+
+        // Fetch traffic data with the date filter
+        const trafficData = await trafficRepo.getTrafficAnalysisData(req.sequelize, selectedDate);
 
         // Respond with the traffic data
         res.status(200).json({
@@ -21,4 +24,5 @@ exports.getTrafficAnalysis = async (req, res) => {
         });
     }
 };
+
 

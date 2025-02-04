@@ -2,12 +2,13 @@ const licenseRecognitionRepo = require("../../repository/licenseRecognitionRepo"
 
 exports.getLicenseRecognitionData = async (req, res) => {
     try {
-        const currentDate = new Date().toISOString().slice(0, 10); // Get current date in YYYY-MM-DD format
+        // Get date filter from request query, or default to current date
+        const requestedDate = req.query.date || new Date().toISOString().slice(0, 10); // YYYY-MM-DD format
 
-        // Fetch data from repository
-        const totalNumberOfVehicles = await licenseRecognitionRepo.getTotalNumberOfVehicles(req.sequelize, currentDate);
-        const vehiclesListed = await licenseRecognitionRepo.getVehiclesListed(req.sequelize, currentDate);
-        const anprClarification = await licenseRecognitionRepo.getANPRClarification(req.sequelize, currentDate);
+        // Fetch data from repository with the given date filter
+        const totalNumberOfVehicles = await licenseRecognitionRepo.getTotalNumberOfVehicles(req.sequelize, requestedDate);
+        const vehiclesListed = await licenseRecognitionRepo.getVehiclesListed(req.sequelize, requestedDate);
+        const anprClarification = await licenseRecognitionRepo.getANPRClarification(req.sequelize, requestedDate);
 
         // Combine all results into a single response
         res.status(200).json({
@@ -28,3 +29,4 @@ exports.getLicenseRecognitionData = async (req, res) => {
         });
     }
 };
+

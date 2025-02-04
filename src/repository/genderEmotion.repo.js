@@ -3,23 +3,24 @@ const { Op } = require("sequelize");
 const { Sequelize } = require("sequelize");
 
 class GenderEmotionRepository {
-    async getGenderBasedCounts(sequelize) {
+    async getGenderBasedCounts(sequelize, date) {
         try {
             const query = `
                 SELECT 
                     gbc.gender, 
                     SUM(gbc.count) AS count,
-                    ROUND((SUM(gbc.count) / (SELECT SUM(count) FROM gender_based_count WHERE DATE(updated_at) = CURDATE())) * 100, 2) AS percentage
+                    ROUND((SUM(gbc.count) / (SELECT SUM(count) FROM gender_based_count WHERE DATE(updated_at) = :date)) * 100, 2) AS percentage
                 FROM 
                     gender_based_count gbc
                 WHERE 
-                    DATE(gbc.updated_at) = CURDATE()
+                    DATE(gbc.updated_at) = :date
                 GROUP BY
                     gbc.gender;
             `;
         
             const genderCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
+                replacements: { date }
             });
         
             return genderCounts;
@@ -30,21 +31,23 @@ class GenderEmotionRepository {
     }
     
     
-    async getEmotionBasedCounts(sequelize) {
+    
+    async getEmotionBasedCounts(sequelize, date) {
         try {
             const query = `
                 SELECT 
                     ebc.emotion, 
                     ebc.count,
-                    ROUND((ebc.count / (SELECT SUM(count) FROM emotion_based_count WHERE DATE(updated_at) = CURDATE())) * 100, 2) AS percentage
+                    ROUND((ebc.count / (SELECT SUM(count) FROM emotion_based_count WHERE DATE(updated_at) = :date)) * 100, 2) AS percentage
                 FROM 
                     emotion_based_count ebc
                 WHERE 
-                    DATE(ebc.updated_at) = CURDATE();
+                    DATE(ebc.updated_at) = :date;
             `;
         
             const emotionCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
+                replacements: { date }
             });
         
             return emotionCounts;
@@ -56,7 +59,8 @@ class GenderEmotionRepository {
     
     
     
-    async getAgeGroupBasedCounts(sequelize) {
+    
+    async getAgeGroupBasedCounts(sequelize, date) {
         try {
             const query = `
                 SELECT 
@@ -65,13 +69,14 @@ class GenderEmotionRepository {
                 FROM 
                     gender_based_count
                 WHERE 
-                    DATE(updated_at) = CURDATE()
+                    DATE(updated_at) = :date
                 GROUP BY 
                     age_group;
             `;
     
             const rawCounts = await sequelize.query(query, {
                 type: sequelize.QueryTypes.SELECT,
+                replacements: { date }
             });
     
             // Convert count to numbers
@@ -95,11 +100,7 @@ class GenderEmotionRepository {
             throw error;
         }
     }
-    
-    
-    
-    
-    
+       
    
 }
 

@@ -3,20 +3,9 @@ const { Op } = require("sequelize");
 const { Sequelize } = require("sequelize");
 
 class trafficRepository {
-    async getTrafficAnalysisData(sequelize) {
+    async getTrafficAnalysisData(sequelize, selectedDate) {
         try {
-            // Log the server timezone and current server time
-            console.log("Server Timezone:", Intl.DateTimeFormat().resolvedOptions().timeZone);
-            console.log("Current Server Time:", new Date().toLocaleString());
-    
-            // Get the timezone from MySQL (assuming MySQL is set to use UTC for the global timezone)
-            const timezoneQuery = `SELECT @@global.time_zone AS global_time_zone, @@session.time_zone AS session_time_zone;`;
-            const timezoneResult = await sequelize.query(timezoneQuery, {
-                type: sequelize.QueryTypes.SELECT,
-            });
-    
-            console.log("MySQL Global Timezone:", timezoneResult[0].global_time_zone);
-            console.log("MySQL Session Timezone:", timezoneResult[0].session_time_zone);
+            console.log("Fetching traffic data for date:", selectedDate);
     
             // Define static timeline in 24-hour format
             const timeline24hr = [
@@ -34,51 +23,51 @@ class trafficRepository {
                 return `${adjustedHour}:${minutes}:${seconds} ${suffix}`;
             });
     
-            // Get floor-wise count of people_in for today
+            // Get floor-wise count of people_in for the selected date
             const floorCountQuery = `
                 SELECT floor_name, 
                        SUM(people_in) AS totalPeople
                 FROM people_count
-                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+05:30'))
+                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
                 GROUP BY floor_name;
             `;
     
-            // Get today's timeline graph (people_in per floor for each hour of today)
+            // Get timeline graph data for the selected date
             const timelineGraphQuery = `
                 SELECT 
                     floor_name,
                     EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
                     SUM(people_in) AS totalPeople
                 FROM people_count
-                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+05:30'))
+                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
                 GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
                 ORDER BY floor_name, hour;
             `;
     
-            // Execute both queries
+            // Execute queries
             const floorCounts = await sequelize.query(floorCountQuery, {
+                replacements: { selectedDate },
                 type: sequelize.QueryTypes.SELECT,
             });
     
             const timelineGraphData = await sequelize.query(timelineGraphQuery, {
+                replacements: { selectedDate },
                 type: sequelize.QueryTypes.SELECT,
             });
     
-            // Initialize an empty result object for each floor
+            // Initialize the timeline graph result
             const todayTimelineGraph = [];
-            const floorNames = [...new Set(timelineGraphData.map(item => item.floor_name))]; // Get distinct floor names
+            const floorNames = [...new Set(timelineGraphData.map(item => item.floor_name))];
     
-            // For each floor, create a data structure with a totalPeople array
+            // Process timeline graph data
             floorNames.forEach(floor => {
-                const totalPeopleForFloor = new Array(13).fill(0); // Initialize an array for 13 hours (10 AM to 10 PM)
+                const totalPeopleForFloor = new Array(13).fill(0);
     
-                // Populate the totalPeople array for each floor
                 timelineGraphData.forEach(item => {
                     if (item.floor_name === floor) {
-                        // Check if the hour extracted is between 10 and 22, and map it to the correct index in the static timeline
                         const hourIndex = item.hour - 10; // Map hour (10:00-22:00) to array index
                         if (hourIndex >= 0 && hourIndex < 13) {
-                            totalPeopleForFloor[hourIndex] = parseInt(item.totalPeople, 10); // Ensure the value is an integer
+                            totalPeopleForFloor[hourIndex] = parseInt(item.totalPeople, 10);
                         }
                     }
                 });
@@ -90,15 +79,16 @@ class trafficRepository {
             });
     
             return {
-                floorCount: floorCounts || [], // Include floor-wise people_in for today
-                timeline: timelineAMPM, // Return the 12-hour AM/PM timeline
-                todayTimelineGraph: todayTimelineGraph, // Floor-wise data with hourly counts
+                floorCount: floorCounts || [],
+                timeline: timelineAMPM,
+                todayTimelineGraph: todayTimelineGraph,
             };
         } catch (error) {
             console.error("Error in getTrafficAnalysisData repository:", error);
             throw error;
         }
     }
+    
     
 }
 
