@@ -50,6 +50,24 @@ async getVehiclesListed(sequelize, requestedDate) {
     }
 }
 
+async getTotalBikeCount(sequelize, requestedDate) {
+    try {
+        const query = `
+            SELECT SUM(bike_in) AS totalBikeCount
+            FROM bike_count
+            WHERE DATE(updated_at) = :requestedDate;
+        `;
+        const result = await sequelize.query(query, {
+            replacements: { requestedDate },
+            type: sequelize.QueryTypes.SELECT,
+        });
+
+        return result[0]?.totalBikeCount || 0;
+    } catch (error) {
+        console.error("Error in getTotalBikeCount repository:", error);
+        throw error;
+    }
+}
 
 // Fetch ANPR Clarification data (state-based count and RTO-based count)
 async getANPRClarification(sequelize, requestedDate) {
