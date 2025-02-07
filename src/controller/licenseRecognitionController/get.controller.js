@@ -9,6 +9,7 @@ exports.getLicenseRecognitionData = async (req, res) => {
         const totalNumberOfVehicles = await licenseRecognitionRepo.getTotalNumberOfVehicles(req.sequelize, requestedDate);
         const vehiclesListed = await licenseRecognitionRepo.getVehiclesListed(req.sequelize, requestedDate);
         const anprClarification = await licenseRecognitionRepo.getANPRClarification(req.sequelize, requestedDate);
+        const totalBikeCount = await licenseRecognitionRepo.getTotalBikeCount(req.sequelize, requestedDate); // New function
 
         // Combine all results into a single response
         res.status(200).json({
@@ -16,8 +17,10 @@ exports.getLicenseRecognitionData = async (req, res) => {
             message: "License Recognition data retrieved successfully.",
             data: {
                 totalNumberOfVehicles,
+                totalBikeCount, // Added bike count
                 vehiclesListed,
                 anprClarification,
+               
             },
         });
     } catch (error) {
@@ -29,4 +32,5 @@ exports.getLicenseRecognitionData = async (req, res) => {
         });
     }
 };
+
 
