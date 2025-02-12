@@ -2,32 +2,29 @@ const LiveAlertsRepo = require("../../repository/live_alert.repo");
 
 exports.getLiveAlertCount = async (req, res) => {
     try {
-        const { alertDate } = req.query;
+        // Get date from query, default to today's date if not provided
+        const date = req.query.date || new Date().toISOString().slice(0, 10);
 
-        // Validate alertDate input
-        if (!alertDate) {
-            return res.status(400).json({
-                status: false,
-                message: "alertDate is required in query params (YYYY-MM-DD).",
-            });
-        }
+        // Fetch values instead of counts
+        const crowdAlerts = await LiveAlertsRepo.getCrowdAlerts(req.sequelize, date);
+        const suspectAlerts = await LiveAlertsRepo.getSuspectAlerts(req.sequelize, date);
+        const abnormalBehaviors = await LiveAlertsRepo.getAbnormalBehaviors(req.sequelize, date);
 
-        // Fetch live alert count from repository
-        const alertCount = await LiveAlertsRepo.fetchLiveAlertCount(req.sequelize, alertDate);
+        // Fetch **calculated values**
+        const liveAlertCount = await LiveAlertsRepo.calculateLiveAlertCount(req.sequelize, date);
+        const queueAlertCount = await LiveAlertsRepo.calculateQueueAlertCount(req.sequelize, date);
 
-        if (!alertCount) {
-            return res.status(200).json({
-                status: true,
-                message: "No alerts found for the provided date.",
-                data: 0,
-            });
-        }
-
-        // Send success response
+        // Send response with fetched values
         res.status(200).json({
             status: true,
-            message: "Live alert count fetched successfully.",
-            data: alertCount,
+            message: "Live alert data fetched successfully.",
+            data: {
+                liveAlertCount: liveAlertCount || 0, // Calculated
+                queueAlertCount: queueAlertCount || 0, // Calculated
+                crowdAlerts: crowdAlerts || [], // Array of s3_url_path
+                suspectAlerts: suspectAlerts || [], // Array of { file_path, suspect_name }
+                abnormalBehaviors: abnormalBehaviors || [], // Array of s3_url_path
+            },
         });
     } catch (error) {
         console.error("Error in getLiveAlertCount controller:", error);
@@ -38,3 +35,6 @@ exports.getLiveAlertCount = async (req, res) => {
         });
     }
 };
+
+
+
