@@ -27,7 +27,7 @@ class trafficRepository {
             const floorCountQuery = `
                 SELECT floor_name, 
                        SUM(people_in) AS totalPeople
-                FROM people_count
+                FROM people_hourly
                 WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
                 GROUP BY floor_name;
             `;
@@ -38,7 +38,7 @@ class trafficRepository {
                     floor_name,
                     EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
                     SUM(people_in) AS totalPeople
-                FROM people_count
+                FROM people_hourly
                 WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
                 GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
                 ORDER BY floor_name, hour;
