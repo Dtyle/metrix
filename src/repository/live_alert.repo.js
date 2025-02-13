@@ -22,10 +22,10 @@ class LiveAlertsRepository {
         }
     }
     
-    async getCrowdAlerts(sequelize, date) {
+     async getCrowdAlerts(sequelize, date) {
         try {
             const query = `
-                SELECT s3_url_path 
+                SELECT cam_name,updated_at AS timealerts, s3_url_path AS image
                 FROM crowd_control
                 WHERE s3_url_path IS NOT NULL AND DATE(updated_at) = :date;
             `;
@@ -33,7 +33,7 @@ class LiveAlertsRepository {
                 replacements: { date },
                 type: sequelize.QueryTypes.SELECT,
             });
-            return result.map(row => row.s3_url_path); // Returning values
+            return result; // Returning structured values
         } catch (error) {
             console.error("Error in getCrowdAlerts:", error);
             throw error;
@@ -43,7 +43,7 @@ class LiveAlertsRepository {
      async getSuspectAlerts(sequelize, date) {
         try {
             const query = `
-                SELECT file_path, suspect_name
+                SELECT cam_name, timealerts, file_path AS image, suspect_name
                 FROM face_detection
                 WHERE file_path IS NOT NULL AND DATE(timealerts) = :date;
             `;
@@ -51,7 +51,7 @@ class LiveAlertsRepository {
                 replacements: { date },
                 type: sequelize.QueryTypes.SELECT,
             });
-            return result; // Returning values (file_path and suspect_name)
+            return result; // Returning structured values
         } catch (error) {
             console.error("Error in getSuspectAlerts:", error);
             throw error;
@@ -61,7 +61,7 @@ class LiveAlertsRepository {
      async getAbnormalBehaviors(sequelize, date) {
         try {
             const query = `
-                SELECT s3_url_path
+                SELECT cam_name, updated_at AS timealerts, s3_url_path AS image
                 FROM emotion_based_count
                 WHERE s3_url_path IS NOT NULL AND DATE(updated_at) = :date;
             `;
@@ -69,7 +69,7 @@ class LiveAlertsRepository {
                 replacements: { date },
                 type: sequelize.QueryTypes.SELECT,
             });
-            return result.map(row => row.s3_url_path); // Returning values
+            return result; // Returning structured values
         } catch (error) {
             console.error("Error in getAbnormalBehaviors:", error);
             throw error;
