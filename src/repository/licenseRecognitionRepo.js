@@ -32,12 +32,13 @@ async getVehiclesListed(sequelize, requestedDate) {
                 ve.license_plate_number AS licenseNumber,
                 ve.intime AS inTime,
                 ve_out.intime AS outTime,
-                TIMESTAMPDIFF(HOUR, ve.intime, ve_out.intime) AS duration
+                CONCAT(TIMESTAMPDIFF(MINUTE, ve.intime, ve_out.intime), ' mins') AS duration
             FROM vehicle_entry ve
             LEFT JOIN vehicle_exit ve_out 
                 ON ve.license_plate_number = ve_out.license_plate_number
             WHERE DATE(ve.intime) = :requestedDate;
         `;
+
         const result = await sequelize.query(query, {
             replacements: { requestedDate },
             type: sequelize.QueryTypes.SELECT,
@@ -49,6 +50,7 @@ async getVehiclesListed(sequelize, requestedDate) {
         throw error;
     }
 }
+
 
 async getTotalBikeCount(sequelize, requestedDate) {
     try {
