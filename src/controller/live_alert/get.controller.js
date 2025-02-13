@@ -5,7 +5,7 @@ exports.getLiveAlertCount = async (req, res) => {
         // Get date from query, default to today's date if not provided
         const date = req.query.date || new Date().toISOString().slice(0, 10);
 
-        // Fetch values instead of counts
+        // Fetch values with structured response
         const crowdAlerts = await LiveAlertsRepo.getCrowdAlerts(req.sequelize, date);
         const suspectAlerts = await LiveAlertsRepo.getSuspectAlerts(req.sequelize, date);
         const abnormalBehaviors = await LiveAlertsRepo.getAbnormalBehaviors(req.sequelize, date);
@@ -14,16 +14,16 @@ exports.getLiveAlertCount = async (req, res) => {
         const liveAlertCount = await LiveAlertsRepo.calculateLiveAlertCount(req.sequelize, date);
         const queueAlertCount = await LiveAlertsRepo.calculateQueueAlertCount(req.sequelize, date);
 
-        // Send response with fetched values
+        // Send response with structured values
         res.status(200).json({
             status: true,
             message: "Live alert data fetched successfully.",
             data: {
                 liveAlertCount: liveAlertCount || 0, // Calculated
                 queueAlertCount: queueAlertCount || 0, // Calculated
-                crowdAlerts: crowdAlerts || [], // Array of s3_url_path
-                suspectAlerts: suspectAlerts || [], // Array of { file_path, suspect_name }
-                abnormalBehaviors: abnormalBehaviors || [], // Array of s3_url_path
+                crowdAlerts: crowdAlerts || [], // Structured array
+                suspectAlerts: suspectAlerts || [], // Structured array
+                abnormalBehaviors: abnormalBehaviors || [], // Structured array
             },
         });
     } catch (error) {
