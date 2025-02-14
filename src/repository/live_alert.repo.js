@@ -5,22 +5,28 @@ const { Sequelize } = require("sequelize");
 class LiveAlertsRepository {
     async calculateLiveAlertCount(sequelize, date) {
         try {
-            const query = `
-                SELECT COUNT(*) AS alertCount
-                FROM live_alerts
-                WHERE DATE(alert_datetime) = :date;
-            `;
-            const result = await sequelize.query(query, {
-                replacements: { date },
-                type: sequelize.QueryTypes.SELECT,
-            });
+            const crowdAlerts = await this.getCrowdAlerts(sequelize, date);
+            const suspectAlerts = await this.getSuspectAlerts(sequelize, date);
+            const abnormalBehaviors = await this.getAbnormalBehaviors(sequelize, date);
+            const queueAlertCount = await this.calculateQueueAlertCount(sequelize, date);
     
-            return result[0]?.alertCount || 0;
+            // Correct calculation of live alerts
+            const liveAlertCount = Number(queueAlertCount) + crowdAlerts.length + suspectAlerts.length + abnormalBehaviors.length;
+
+            // console.log("Queue Alert Count:", queueAlertCount);
+            // console.log("Crowd Alerts Count:", crowdAlerts.length);
+            // console.log("Suspect Alerts Count:", suspectAlerts.length);
+            // console.log("Abnormal Behaviors Count:", abnormalBehaviors.length);
+            // console.log("Total Live Alert Count:", liveAlertCount);
+            
+            return liveAlertCount;
         } catch (error) {
-            console.error("Error in fetchLiveAlertCount repository:", error);
+            console.error("Error in calculateLiveAlertCount repository:", error);
             throw error;
         }
     }
+    
+
     
      async getCrowdAlerts(sequelize, date) {
         try {
