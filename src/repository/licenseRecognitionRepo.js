@@ -74,13 +74,17 @@ async getTotalBikeCount(sequelize, requestedDate) {
 // Fetch ANPR Clarification data (state-based count and RTO-based count)
 async getANPRClarification(sequelize, requestedDate) {
     try {
-        // Fetch state-based count
+        // Fetch state-based count with state name
         const stateQuery = `
             SELECT 
-                SUBSTRING(license_plate_number, 1, 2) AS stateCode, 
-                COUNT(*) AS count
-            FROM vehicle_entry
-            WHERE DATE(intime) = :requestedDate
+                SUBSTRING(ve.license_plate_number, 1, 2) AS stateCode, 
+                COUNT(*) AS count,
+                (SELECT DISTINCT rto.state 
+                 FROM rto_registration_areas rto 
+                 WHERE SUBSTRING(ve.license_plate_number, 1, 2) = SUBSTRING(rto.rto_code, 1, 2) 
+                 LIMIT 1) AS stateName
+            FROM vehicle_entry ve
+            WHERE DATE(ve.intime) = :requestedDate
             GROUP BY stateCode;
         `;
         const stateResults = await sequelize.query(stateQuery, {
@@ -113,6 +117,7 @@ async getANPRClarification(sequelize, requestedDate) {
         throw error;
     }
 }
+
 
 
 }
