@@ -31,15 +31,14 @@ class LiveAlertsRepository {
     async getCrowdAlerts(sequelize, date) {
         try {
             const query = `
-                SELECT cam_name,updated_at AS timealerts, s3_url_path AS image
-                FROM crowd_control
-                WHERE s3_url_path IS NOT NULL AND DATE(updated_at) = :date;
+SELECT COUNT(*) AS crowdAlerts FROM crowd_control
+WHERE DATE(updated_at) = :date;
             `;
             const result = await sequelize.query(query, {
                 replacements: { date },
                 type: sequelize.QueryTypes.SELECT,
             });
-            return result; // Returning structured values
+            return result[0]?.crowdAlerts || 0;// Returning structured values
         } catch (error) {
             console.error("Error in getCrowdAlerts:", error);
             throw error;
@@ -87,9 +86,10 @@ WHERE s3_url_path IS NOT NULL
     async calculateQueueAlertCount(sequelize, date) {
         try {
             const query = `
-                SELECT SUM(people_in_queue) AS queueAlertCount
-                FROM queue_management
-                WHERE DATE(last_updated) = :date;
+              SELECT COUNT(*) AS queueAlertCount
+FROM queue_management
+WHERE DATE(last_updated) = :date;
+
             `;
             const result = await sequelize.query(query, {
                 replacements: { date },
