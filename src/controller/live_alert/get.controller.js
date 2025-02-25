@@ -21,7 +21,7 @@ exports.getLiveAlertCount = async (req, res) => {
             data: {
                 liveAlertCount: liveAlertCount || 0, // Calculated
                 queueAlertCount: queueAlertCount || 0, // Calculated
-                crowdAlerts: crowdAlerts || [], // Structured array
+                crowdAlerts: crowdAlerts || 0, // Structured array
                 suspectAlerts: suspectAlerts || [], // Structured array
                 abnormalBehaviors: abnormalBehaviors || [], // Structured array
             },
