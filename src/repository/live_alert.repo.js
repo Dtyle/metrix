@@ -9,15 +9,9 @@ class LiveAlertsRepository {
             const suspectAlerts = await this.getSuspectAlerts(sequelize, date);
             const abnormalBehaviors = await this.getAbnormalBehaviors(sequelize, date);
             const queueAlertCount = await this.calculateQueueAlertCount(sequelize, date);
+            const liveAlertCount = Number(queueAlertCount) + Number(crowdAlerts) + suspectAlerts.length + abnormalBehaviors.length;
 
-            // Correct calculation of live alerts
-            const liveAlertCount = Number(queueAlertCount) + crowdAlerts.length + suspectAlerts.length + abnormalBehaviors.length;
-
-            // console.log("Queue Alert Count:", queueAlertCount);
-            // console.log("Crowd Alerts Count:", crowdAlerts.length);
-            // console.log("Suspect Alerts Count:", suspectAlerts.length);
-            // console.log("Abnormal Behaviors Count:", abnormalBehaviors.length);
-            // console.log("Total Live Alert Count:", liveAlertCount);
+        
 
             return liveAlertCount;
         } catch (error) {
