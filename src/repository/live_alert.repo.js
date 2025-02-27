@@ -9,7 +9,7 @@ class LiveAlertsRepository {
             const suspectAlerts = await this.getSuspectAlerts(sequelize, date);
             const abnormalBehaviors = await this.getAbnormalBehaviors(sequelize, date);
             const queueAlertCount = await this.calculateQueueAlertCount(sequelize, date);
-            const liveAlertCount = Number(queueAlertCount) + Number(crowdAlerts) + suspectAlerts.length + abnormalBehaviors.length;
+            const liveAlertCount = queueAlertCount.length + crowdAlerts.length + suspectAlerts.length + abnormalBehaviors.length;
 
         
 
@@ -25,14 +25,17 @@ class LiveAlertsRepository {
     async getCrowdAlerts(sequelize, date) {
         try {
             const query = `
-SELECT COUNT(*) AS crowdAlerts FROM crowd_control
-WHERE DATE(updated_at) = :date;
+ SELECT cam_name, updated_at AS timealerts, s3_url_path AS image
+FROM crowd_control
+WHERE s3_url_path IS NOT NULL 
+    AND DATE(updated_at) = :date
+
             `;
             const result = await sequelize.query(query, {
                 replacements: { date },
                 type: sequelize.QueryTypes.SELECT,
             });
-            return result[0]?.crowdAlerts || 0;// Returning structured values
+            return result; 
         } catch (error) {
             console.error("Error in getCrowdAlerts:", error);
             throw error;
@@ -80,9 +83,10 @@ WHERE s3_url_path IS NOT NULL
     async calculateQueueAlertCount(sequelize, date) {
         try {
             const query = `
-              SELECT COUNT(*) AS queueAlertCount
+              SELECT cam_name, last_updated AS timealerts, s3_url_path AS image
 FROM queue_management
-WHERE DATE(last_updated) = :date;
+WHERE s3_url_path IS NOT NULL 
+    AND DATE(last_updated) = :date
 
             `;
             const result = await sequelize.query(query, {
@@ -90,7 +94,7 @@ WHERE DATE(last_updated) = :date;
                 type: sequelize.QueryTypes.SELECT,
             });
 
-            return result[0]?.queueAlertCount || 0;
+            return result;
         } catch (error) {
             console.error("Error in fetchQueueAlertCount repository:", error);
             throw error;
