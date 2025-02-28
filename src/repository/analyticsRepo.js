@@ -24,16 +24,16 @@ class analyticsRepository {
                 -- Calculate elapsed hours (fall back to minutes if zero)
                 CASE 
                     WHEN TIMESTAMPDIFF(HOUR, 
-                        (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                        (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                        (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                        (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                     ) = 0 
                     THEN ROUND(TIMESTAMPDIFF(MINUTE, 
-                        (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                        (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                        (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                        (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                     ) / 60.0, 2)
                     ELSE TIMESTAMPDIFF(HOUR, 
-                        (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                        (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                        (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                        (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                     )
                 END AS elapsedHours,
                 -- Calculate hourlyFootfallAverage safely
@@ -42,16 +42,16 @@ class analyticsRepository {
                     NULLIF(
                         CASE 
                             WHEN TIMESTAMPDIFF(HOUR, 
-                                (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                                (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                                (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                                (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                             ) = 0 
                             THEN TIMESTAMPDIFF(MINUTE, 
-                                (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                                (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                                (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                                (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                             ) / 60.0
                             ELSE TIMESTAMPDIFF(HOUR, 
-                                (SELECT MIN(updated_at) FROM people_count WHERE DATE(updated_at) = :date), 
-                                (SELECT MAX(updated_at) FROM people_count WHERE DATE(updated_at) = :date)
+                                (SELECT MIN(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date), 
+                                (SELECT MAX(updated_at) FROM people_hourly WHERE DATE(updated_at) = :date)
                             )
                         END
                     , 0), 2
