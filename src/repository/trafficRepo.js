@@ -32,16 +32,33 @@ class trafficRepository {
                 GROUP BY floor_name;
             `;
     
-            // Get timeline graph data for the selected date
+            // Get timeline graph data for the selected date with differences
             const timelineGraphQuery = `
                 SELECT 
-                    floor_name,
-                    EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
-                    SUM(people_in) AS totalPeople
-                FROM people_hourly
-                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
-                GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
-                ORDER BY floor_name, hour;
+                    curr.floor_name,
+                    curr.hour,
+                    curr.totalPeople,
+                    COALESCE(curr.totalPeople - IFNULL(prev.totalPeople, 0), 0) AS people_in_diff
+                FROM (
+                    SELECT 
+                        floor_name,
+                        EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
+                        SUM(people_in) AS totalPeople
+                    FROM people_hourly
+                    WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
+                    GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
+                ) AS curr
+                LEFT JOIN (
+                    SELECT 
+                        floor_name,
+                        EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
+                        SUM(people_in) AS totalPeople
+                    FROM people_hourly
+                    WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :selectedDate
+                    GROUP BY floor_name, EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30'))
+                ) AS prev
+                ON curr.floor_name = prev.floor_name AND curr.hour = prev.hour + 1
+                ORDER BY curr.floor_name, curr.hour;
             `;
     
             // Execute queries
@@ -67,7 +84,8 @@ class trafficRepository {
                     if (item.floor_name === floor) {
                         const hourIndex = item.hour - 10; // Map hour (10:00-22:00) to array index
                         if (hourIndex >= 0 && hourIndex < 13) {
-                            totalPeopleForFloor[hourIndex] = parseInt(item.totalPeople, 10);
+                            // Use Math.abs() to ensure the value is non-negative
+                            totalPeopleForFloor[hourIndex] = Math.abs(parseInt(item.people_in_diff, 10));
                         }
                     }
                 });
