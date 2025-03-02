@@ -70,31 +70,48 @@ class analyticsRepository {
             // Query to get Peak Hour Busiest Time Today
             const peakHourQuery = `
             SELECT 
-                DATE_FORMAT(
-                    CONVERT_TZ(updated_at, '+00:00', '+04:30'), '%Y-%m-%d %H:00:00'
-                ) AS start_hour,
-                DATE_FORMAT(
-                    CONVERT_TZ(DATE_ADD(updated_at, INTERVAL 1 HOUR), '+00:00', '+04:30'), '%Y-%m-%d %H:00:00'
-                ) AS end_hour,
-                SUM(people_in) AS total_people_in
-            FROM people_count
-            WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :date
-            GROUP BY start_hour, end_hour
-            ORDER BY total_people_in DESC
+                hour,
+                SUM(people_in_diff) AS total_people_in_diff
+            FROM (
+                SELECT 
+                    curr.floor_name,
+                    EXTRACT(HOUR FROM CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) AS hour,
+                    curr.people_in - IFNULL(prev.people_in, 0) AS people_in_diff
+                FROM people_hourly curr
+                LEFT JOIN people_hourly prev
+                ON curr.floor_name = prev.floor_name
+                AND EXTRACT(HOUR FROM CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) = EXTRACT(HOUR FROM CONVERT_TZ(prev.updated_at, '+00:00', '+05:30')) + 1
+                WHERE DATE(CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) = :date
+            ) AS HourlyDifferences
+            GROUP BY hour
+            ORDER BY total_people_in_diff DESC
             LIMIT 1;
         `;
         
+        console.log("Executing query for date:", date);
         const [peakHourResult] = await sequelize.query(peakHourQuery, {
             replacements: { date },
             type: sequelize.QueryTypes.SELECT,
         });
         
+        
         let peakHourBusiestTime = "N/A";
-        if (peakHourResult?.start_hour && peakHourResult?.end_hour) {
+        if (peakHourResult?.hour) {
             const moment = require("moment");
-            const startHour = moment(peakHourResult.start_hour).format("h A");
-            const endHour = moment(peakHourResult.end_hour).format("h A");
+            const startHour = moment()
+                .hour(peakHourResult.hour)
+                .startOf("hour")
+                .format("h A");
+            const endHour = moment()
+                .hour(peakHourResult.hour + 1)
+                .startOf("hour")
+                .format("h A");
             peakHourBusiestTime = `${startHour} to ${endHour}`;
+        
+            // Log the total difference for the peak hour
+            console.log("Total people in difference for peak hour:", peakHourResult.total_people_in_diff);
+        } else {
+            console.log("No peak hour data found for the selected date.");
         }
         
         console.log("Peak hour busiest time:", peakHourBusiestTime);
