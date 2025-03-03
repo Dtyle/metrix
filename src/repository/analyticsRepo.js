@@ -70,20 +70,26 @@ class analyticsRepository {
             // Query to get Peak Hour Busiest Time Today
             const peakHourQuery = `
             SELECT 
-                hour,
-                SUM(people_in_diff) AS total_people_in_diff
+                curr.hour,
+                SUM(curr.people_in - IFNULL(prev.people_in, 0)) AS total_people_in_diff
             FROM (
                 SELECT 
-                    curr.floor_name,
-                    EXTRACT(HOUR FROM CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) AS hour,
-                    curr.people_in - IFNULL(prev.people_in, 0) AS people_in_diff
-                FROM people_hourly curr
-                LEFT JOIN people_hourly prev
-                ON curr.floor_name = prev.floor_name
-                AND EXTRACT(HOUR FROM CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) = EXTRACT(HOUR FROM CONVERT_TZ(prev.updated_at, '+00:00', '+05:30')) + 1
-                WHERE DATE(CONVERT_TZ(curr.updated_at, '+00:00', '+05:30')) = :date
-            ) AS HourlyDifferences
-            GROUP BY hour
+                    floor_name,
+                    EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
+                    people_in
+                FROM people_hourly
+                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :date
+            ) AS curr
+            LEFT JOIN (
+                SELECT 
+                    floor_name,
+                    EXTRACT(HOUR FROM CONVERT_TZ(updated_at, '+00:00', '+05:30')) AS hour,
+                    people_in
+                FROM people_hourly
+                WHERE DATE(CONVERT_TZ(updated_at, '+00:00', '+05:30')) = :date
+            ) AS prev
+            ON curr.floor_name = prev.floor_name AND curr.hour = prev.hour + 1
+            GROUP BY curr.hour
             ORDER BY total_people_in_diff DESC
             LIMIT 1;
         `;
@@ -93,7 +99,6 @@ class analyticsRepository {
             replacements: { date },
             type: sequelize.QueryTypes.SELECT,
         });
-        
         
         let peakHourBusiestTime = "N/A";
         if (peakHourResult?.hour) {
@@ -108,13 +113,13 @@ class analyticsRepository {
                 .format("h A");
             peakHourBusiestTime = `${startHour} to ${endHour}`;
         
-            // Log the total difference for the peak hour
             console.log("Total people in difference for peak hour:", peakHourResult.total_people_in_diff);
         } else {
             console.log("No peak hour data found for the selected date.");
         }
         
         console.log("Peak hour busiest time:", peakHourBusiestTime);
+        
             const overallHourlyFootfallQuery = `
            SELECT 
         SUM(people_in) AS totalPeopleIn,
