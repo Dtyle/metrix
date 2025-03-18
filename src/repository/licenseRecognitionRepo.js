@@ -36,7 +36,8 @@ async getVehiclesListed(sequelize, requestedDate) {
             FROM vehicle_entry ve
             LEFT JOIN vehicle_exit ve_out 
                 ON ve.license_plate_number = ve_out.license_plate_number
-            WHERE DATE(ve.intime) = :requestedDate;
+            WHERE DATE(ve.intime) = :requestedDate
+            AND ve_out.intime > ve.intime; -- Ensure outTime is later than inTime
         `;
 
         const result = await sequelize.query(query, {
