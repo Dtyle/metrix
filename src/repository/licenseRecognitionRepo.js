@@ -32,12 +32,15 @@ async getVehiclesListed(sequelize, requestedDate) {
                 ve.license_plate_number AS licenseNumber,
                 ve.intime AS inTime,
                 ve_out.intime AS outTime,
-                CONCAT(TIMESTAMPDIFF(MINUTE, ve.intime, ve_out.intime), ' mins') AS duration
+                CASE 
+                    WHEN ve_out.intime IS NULL THEN 'Nill'
+                    WHEN ve_out.intime > ve.intime THEN CONCAT(TIMESTAMPDIFF(MINUTE, ve.intime, ve_out.intime), ' mins')
+                    ELSE 'Invalid Duration'
+                END AS duration
             FROM vehicle_entry ve
             LEFT JOIN vehicle_exit ve_out 
                 ON ve.license_plate_number = ve_out.license_plate_number
-            WHERE DATE(ve.intime) = :requestedDate
-            AND ve_out.intime > ve.intime; -- Ensure outTime is later than inTime
+            WHERE DATE(ve.intime) = :requestedDate;
         `;
 
         const result = await sequelize.query(query, {
