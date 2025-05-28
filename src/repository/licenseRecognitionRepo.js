@@ -83,15 +83,15 @@ async getANPRClarification(sequelize, requestedDate) {
         // Fetch state-based count with state name
         const stateQuery = `
             SELECT 
-                SUBSTRING(ve.license_plate_number, 1, 2) AS stateCode, 
-                COUNT(*) AS count,
-                (SELECT DISTINCT rto.state 
-                 FROM rto_registration_areas rto 
-                 WHERE SUBSTRING(ve.license_plate_number, 1, 2) = SUBSTRING(rto.rto_code, 1, 2) 
-                 LIMIT 1) AS stateName
-            FROM vehicle_entry ve
-            WHERE DATE(ve.intime) = :requestedDate
-            GROUP BY stateCode;
+    SUBSTRING(ve.license_plate_number, 1, 2) AS stateCode, 
+    COUNT(*) AS count,
+    rto.state AS stateName
+FROM vehicle_entry ve
+LEFT JOIN rto_registration_areas rto 
+    ON SUBSTRING(ve.license_plate_number, 1, 2) = SUBSTRING(rto.rto_code, 1, 2)
+WHERE DATE(ve.intime) = :requestedDate
+GROUP BY stateCode, rto.state;
+
         `;
         const stateResults = await sequelize.query(stateQuery, {
             replacements: { requestedDate },
