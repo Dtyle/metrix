@@ -14,7 +14,6 @@ exports.createCameraMapping = async (req, res) => {
       coordinates,
     } = req.body;
 
-    // Validate required fields
     if (!camera_name || !use_case_type  || !ip_address) {
       return res.status(400).json({
         status: false,
@@ -22,7 +21,9 @@ exports.createCameraMapping = async (req, res) => {
       });
     }
 
-    // Insert data using repository
+    // Convert coordinates array to JSON string
+    const coordinatesString = JSON.stringify(coordinates);
+
     const result = await cameraRepo.insertCameraMapping(req.sequelize, {
       camera_name,
       use_case_type,
@@ -32,7 +33,7 @@ exports.createCameraMapping = async (req, res) => {
       username,
       password,
       camera_path,
-      coordinates,
+      coordinates: coordinatesString, // pass as string
     });
 
     return res.status(201).json({
