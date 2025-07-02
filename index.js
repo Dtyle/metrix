@@ -39,6 +39,7 @@ require("./src/routes/analyticsRoute.js")(app);
 require("./src/routes/faceRecognitionRoute.js")(app);
 require("./src/routes/licenseRecognitionRoute.js")(app);
 require("./src/routes/trafficRoutes.js")(app);
+require("./src/routes/cameraMappingRoutes.js")(app);
 // Set the port and start the server
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
